@@ -1,4 +1,4 @@
-import { Post } from "../../../generated/prisma/client";
+import { Post, PostStatus } from "../../../generated/prisma/client";
 import { PostWhereInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
 
@@ -13,7 +13,7 @@ const createPost = async (data: Omit<Post, "id" | "createdAt" | "authorId">, use
   return result;
 }
 // TODO : Get All Posts
-const getAllPosts = async (payload: { search: string | undefined, tags: string[] | [] }) => {
+const getAllPosts = async (payload: { search: string | undefined, tags: string[] | [], isFeatured: boolean | undefined, status: PostStatus | undefined, authorId: string | undefined }) => {
   const andConditions: PostWhereInput[] = [];
   if (payload.search) {
     andConditions.push({
@@ -44,6 +44,24 @@ const getAllPosts = async (payload: { search: string | undefined, tags: string[]
       tags: {
         hasEvery: payload.tags as string[]
       }
+    })
+  }
+
+  if (typeof (payload.isFeatured) === 'boolean') {
+    andConditions.push({
+      isFeatured: payload.isFeatured
+    })
+  }
+
+  if (payload.status) {
+    andConditions.push({
+      status: payload.status
+    })
+  }
+
+  if (payload.authorId) {
+    andConditions.push({
+      authorId: payload.authorId
     })
   }
 
