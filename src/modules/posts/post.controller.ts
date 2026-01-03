@@ -22,6 +22,25 @@ const createPost = async (req: Request, res: Response) => {
   }
 }
 
+//* Get all Posts
+const getAllPosts = async (req: Request, res: Response) => {
+  try {
+    const { search } = req.query;
+    const searchString = typeof search === 'string' ? search : undefined;
+    const tags = req.query.tags ? (req.query.tags as string).split(',') : [];
+    const result = await postService.getAllPosts({ search: searchString, tags });
+    res.status(200).json({
+      success: true,
+      data: result
+    })
+  } catch (err) {
+    res.status(400).json({
+      error: "Post Creation Failed",
+      details: err,
+    })
+  }
+}
+
 export const postController = {
-  createPost,
+  createPost, getAllPosts
 }
