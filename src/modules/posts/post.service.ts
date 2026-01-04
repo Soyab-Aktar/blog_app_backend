@@ -13,7 +13,18 @@ const createPost = async (data: Omit<Post, "id" | "createdAt" | "authorId">, use
   return result;
 }
 // TODO : Get All Posts
-const getAllPosts = async (payload: { search: string | undefined, tags: string[] | [], isFeatured: boolean | undefined, status: PostStatus | undefined, authorId: string | undefined }) => {
+const getAllPosts = async (payload: {
+  search: string | undefined,
+  tags: string[] | [],
+  isFeatured: boolean | undefined,
+  status: PostStatus | undefined,
+  authorId: string | undefined,
+  page: number,
+  limit: number,
+  skip: number,
+  sortBy: string | undefined,
+  sortOrder: string | undefined,
+}) => {
   const andConditions: PostWhereInput[] = [];
   if (payload.search) {
     andConditions.push({
@@ -65,10 +76,16 @@ const getAllPosts = async (payload: { search: string | undefined, tags: string[]
     })
   }
 
+
   const allPosts = await prisma.post.findMany({
+    take: payload.limit,
+    skip: payload.skip,
     where: {
       AND: andConditions
-    }
+    },
+    orderBy: payload.sortBy && payload.sortOrder ? {
+      [payload.sortBy]: payload.sortOrder
+    } : { createdAt: "desc" }
   });
   return allPosts;
 }
