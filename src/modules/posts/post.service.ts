@@ -22,8 +22,8 @@ const getAllPosts = async (payload: {
   page: number,
   limit: number,
   skip: number,
-  sortBy: string | undefined,
-  sortOrder: string | undefined,
+  sortBy: string,
+  sortOrder: string,
 }) => {
   const andConditions: PostWhereInput[] = [];
   if (payload.search) {
@@ -83,14 +83,54 @@ const getAllPosts = async (payload: {
     where: {
       AND: andConditions
     },
-    orderBy: payload.sortBy && payload.sortOrder ? {
+    orderBy: {
       [payload.sortBy]: payload.sortOrder
-    } : { createdAt: "desc" }
+    }
   });
-  return allPosts;
+
+  const total = await prisma.post.count({
+    where: {
+      AND: andConditions
+    }
+  })
+  const { page, limit, } = payload;
+  return {
+    data: allPosts,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPage: Math.ceil(total / limit),
+
+    }
+  }
+}
+
+// TODO : Get Post by Id
+const getPostById = async (postId: string) => {
+  return await prisma.$transaction(async (tx) => {
+    await tx.post.update({
+      where: {
+        id: postId
+      },
+      data: {
+        views: {
+          increment: 1
+        }
+      }
+    })
+
+    const postData = await tx.post.findUnique({
+      where: {
+        id: postId
+      }
+    })
+
+    return postData;
+  })
 }
 
 //! Export
 export const postService = {
-  createPost, getAllPosts
+  createPost, getAllPosts, getPostById,
 }

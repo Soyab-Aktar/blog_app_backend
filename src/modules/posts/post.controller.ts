@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { postService } from "./post.service";
 import { Post, PostStatus } from "../../../generated/prisma/client";
 import { error } from "node:console";
+import paginationSortingHelper from "../../helpers/paginationSortingHelper";
 
 //* Create Posts
 const createPost = async (req: Request, res: Response) => {
@@ -38,12 +39,7 @@ const getAllPosts = async (req: Request, res: Response) => {
     const status = req.query.status as PostStatus | undefined;
     const authorId = req.query.authorId as string | undefined;
 
-    const page = Number(req.query.page ?? 1);
-    const limit = Number(req.query.limit ?? 10);
-    const skip = (page - 1) * limit;
-
-    const sortBy = req.query.sortBy as string | undefined;
-    const sortOrder = req.query.sortOrder as string | undefined;
+    const { page, limit, skip, sortBy, sortOrder } = paginationSortingHelper(req.query);
 
 
     const result = await postService.getAllPosts({ search: searchString, tags, isFeatured, status, authorId, page, limit, skip, sortBy, sortOrder });
@@ -59,6 +55,27 @@ const getAllPosts = async (req: Request, res: Response) => {
   }
 }
 
+//* Get Post By ID
+const getPostById = async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    console.log(postId);
+    if (!postId) {
+      throw new Error("Post ID is required")
+    }
+    const result = await postService.getPostById(postId);
+    res.status(200).json({
+      result: result,
+    })
+
+  } catch (err) {
+    res.status(400).json({
+      error: "Post Creation Failed",
+      details: err,
+    })
+  }
+}
+
 export const postController = {
-  createPost, getAllPosts
+  createPost, getAllPosts, getPostById
 }
