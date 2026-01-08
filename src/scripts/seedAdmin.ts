@@ -40,8 +40,6 @@ async function seedAdmin() {
       })
     }
 
-    console.log(signUpAdmin);
-
   } catch (err) {
     console.error(err);
   }
