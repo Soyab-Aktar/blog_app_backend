@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import { postService } from "./post.service";
 import { Post, PostStatus } from "../../../generated/prisma/client";
-import { error } from "node:console";
 import paginationSortingHelper from "../../helpers/paginationSortingHelper";
+import { UserRole } from "../../middleware/authMiddleware";
+
 
 //* Create Posts
 const createPost = async (req: Request, res: Response) => {
@@ -69,12 +70,81 @@ const getPostById = async (req: Request, res: Response) => {
 
   } catch (err) {
     res.status(400).json({
-      error: "Post Creation Failed",
+      error: "Post Retrive Failed",
+      details: err,
+    })
+  }
+}
+//* Get Post mine
+const getMyPost = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      throw new Error('User Not found')
+    }
+
+    const result = await postService.getMyPost(user?.id as string);
+    res.status(200).json({
+      success: true,
+      result: result
+    })
+
+  } catch (err) {
+    res.status(400).json({
+      error: "Posts Retrive Failed",
+      details: err,
+    })
+  }
+}
+//* Update Posts
+const updatePost = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      throw new Error('You are not authorized')
+    }
+
+    const { postId } = req.params;
+    const isAdmin = user.role === UserRole.ADMIN;
+
+    const result = await postService.updatePost(postId as string, req.body, user?.id as string, isAdmin as boolean);
+    res.status(200).json({
+      success: true,
+      result: result
+    })
+
+  } catch (err) {
+    res.status(400).json({
+      error: "Posts Update Failed",
+      details: err,
+    })
+  }
+}
+//* Delete Posts
+const deletePost = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      throw new Error('You are not authorized')
+    }
+
+    const { postId } = req.params;
+    const isAdmin = user.role === UserRole.ADMIN;
+
+    const result = await postService.deletePost(postId as string, req.body, user?.id as string, isAdmin as boolean);
+    res.status(200).json({
+      success: true,
+      result: result
+    })
+
+  } catch (err) {
+    res.status(400).json({
+      error: "Posts Delete Failed",
       details: err,
     })
   }
 }
 
 export const postController = {
-  createPost, getAllPosts, getPostById
+  createPost, getAllPosts, getPostById, getMyPost, updatePost, deletePost
 }

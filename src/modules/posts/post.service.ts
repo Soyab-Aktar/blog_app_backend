@@ -171,7 +171,93 @@ const getPostById = async (postId: string) => {
   })
 }
 
+// TODO : Get Logged user post
+const getMyPost = async (authorId: string) => {
+  await prisma.user.findUniqueOrThrow({
+    where: {
+      id: authorId,
+      status: "ACTIVE"
+    },
+    select: {
+      id: true
+    }
+  })
+
+  const result = await prisma.post.findMany({
+    where: {
+      authorId: authorId
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+
+  const total = await prisma.post.aggregate({
+    _count: {
+      id: true
+    },
+    where: {
+      authorId
+    }
+  })
+
+  return {
+    data: result,
+    total
+  };
+}
+
+//TODO : Update post data
+const updatePost = async (postId: string, data: Partial<Post>, userId: string, isAdmin: boolean) => {
+  const postDate = await prisma.post.findUniqueOrThrow({
+    where: {
+      id: postId
+    },
+    select: {
+      id: true,
+      authorId: true
+    }
+  })
+
+  if (!isAdmin && (postDate.authorId !== userId)) {
+    throw new Error('Not Authorised for this');
+  }
+  if (!isAdmin) {
+    delete data.isFeatured;
+  }
+
+  return await prisma.post.update({
+    where: {
+      id: postId
+    },
+    data
+  })
+}
+
+//TODO : Delete post
+const deletePost = async (postId: string, data: Partial<Post>, userId: string, isAdmin: boolean) => {
+  const postDate = await prisma.post.findUniqueOrThrow({
+    where: {
+      id: postId
+    },
+    select: {
+      id: true,
+      authorId: true
+    }
+  })
+
+  if (!isAdmin && (postDate.authorId !== userId)) {
+    throw new Error('Not Authorised for this');
+  }
+
+  return await prisma.post.delete({
+    where: {
+      id: postId
+    }
+  })
+}
+
 //! Export
 export const postService = {
-  createPost, getAllPosts, getPostById,
+  createPost, getAllPosts, getPostById, getMyPost, updatePost, deletePost
 }
