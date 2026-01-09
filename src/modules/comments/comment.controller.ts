@@ -100,7 +100,29 @@ const updateComment = async (req: Request, res: Response) => {
     })
   }
 }
+//* Modarate Comment
+const modarateComment = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    const { commentId } = req.params
+
+    const result = await commentService.modarateComment(commentId as string, req.body);
+    res.status(200).json({
+      success: true,
+      date: result
+    })
+
+  } catch (err) {
+    const errorMessage = (err instanceof Error) ? err.message : "Commnet Status update not completed";
+    res.status(400).json({
+      success: false,
+      error: errorMessage,
+      details: err
+    })
+  }
+}
+
 
 export const commentController = {
-  createComment, getCommentById, getCommentByAuthorId, deleteComment, updateComment
+  createComment, getCommentById, getCommentByAuthorId, deleteComment, updateComment, modarateComment
 }
