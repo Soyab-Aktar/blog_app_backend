@@ -4,6 +4,8 @@ import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 import cors from 'cors';
 import { commentRouter } from "./modules/comments/comment.routes";
+import errorHandler from "./middleware/golbalErrorHandler";
+import { notFound } from "./middleware/notFound";
 
 const app = express();
 app.use(cors({
@@ -18,9 +20,12 @@ app.use('/posts', postRouter);
 app.use('/comments', commentRouter);
 
 
+
 app.get('/', (req, res) => {
-  res.send("Hello Lets Learn Prisma")
+  res.send("Hello, Welcome To Blog App")
 })
 
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;
