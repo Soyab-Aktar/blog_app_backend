@@ -1,6 +1,7 @@
 import { CommentStatus, Post, PostStatus } from "../../../generated/prisma/client";
 import { PostWhereInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
+import { UserRole } from "../../middleware/authMiddleware";
 
 // TODO : Create Post
 const createPost = async (data: Omit<Post, "id" | "createdAt" | "authorId">, userId: string) => {
@@ -257,7 +258,74 @@ const deletePost = async (postId: string, data: Partial<Post>, userId: string, i
   })
 }
 
+//TODO : Get Stats
+const getStats = async () => {
+  // ==> postCount, publlishedPosts, draftPosts, totalComments, totalViews
+  return await prisma.$transaction(async (tsx) => {
+
+    const [
+      totalPosts,
+      publlishedPosts,
+      draftPosts,
+      archivedPosts,
+      totalComments,
+      approvedComments,
+      rejectComments,
+      totalUsers,
+      adminCount,
+      userCount,
+      totalViews,
+    ] = await Promise.all([
+
+      await tsx.post.count(),
+      await tsx.post.count({
+        where: { status: PostStatus.PUBLISHED }
+      }),
+      await tsx.post.count({
+        where: { status: PostStatus.DRAFT }
+      }),
+      await tsx.post.count({
+        where: { status: PostStatus.ARCHIVED }
+      }),
+      await tsx.comment.count(),
+      await tsx.comment.count({
+        where: { status: CommentStatus.APPROVED }
+      }),
+      await tsx.comment.count({
+        where: { status: CommentStatus.REJECT }
+      }),
+      await tsx.user.count(),
+      await tsx.user.count({
+        where: { role: UserRole.ADMIN }
+      }),
+      await tsx.user.count({
+        where: { role: UserRole.USER }
+      }),
+      await tsx.post.aggregate({
+        _sum: { views: true }
+      })
+
+    ])
+
+    return {
+      totalPosts,
+      publlishedPosts,
+      draftPosts,
+      archivedPosts,
+      totalComments,
+      approvedComments,
+      rejectComments,
+      totalUsers,
+      adminCount,
+      userCount,
+      totalViews: totalViews._sum.views,
+    }
+
+
+  })
+}
+
 //! Export
 export const postService = {
-  createPost, getAllPosts, getPostById, getMyPost, updatePost, deletePost
+  createPost, getAllPosts, getPostById, getMyPost, updatePost, deletePost, getStats
 }

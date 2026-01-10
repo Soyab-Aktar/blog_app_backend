@@ -144,7 +144,25 @@ const deletePost = async (req: Request, res: Response) => {
     })
   }
 }
+//* Get Stats 
+const getStats = async (req: Request, res: Response) => {
+  try {
+
+    const result = await postService.getStats();
+    console.log({ result });
+    res.status(200).json({
+      success: true,
+      result: result
+    })
+
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      error: "Posts Stats retrive Failed",
+    })
+  }
+}
 
 export const postController = {
-  createPost, getAllPosts, getPostById, getMyPost, updatePost, deletePost
+  createPost, getAllPosts, getPostById, getMyPost, updatePost, deletePost, getStats
 }
